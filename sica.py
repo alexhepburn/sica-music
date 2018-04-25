@@ -7,11 +7,20 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import networkx as nx 
 
-n=25
+n=400
+X1 = np.random.normal(loc=0.0,size=[int(n/2)])
+X2 = np.random.normal(loc=5.0,size=[int(n/2)])
 
-X = np.random.multivariate_normal([0, 0], [[5, 10], [3, 10]], n)
+
+#X1 = np.random.multivariate_normal([0, 0], [[1, 0], [-2, 1]], int(n/2))
+#X2 = np.random.multivariate_normal([5, 0], [[1, 0], [2, 5]], int(n/2))
+X = np.concatenate([X1,X2])
 dist = np.absolute(distance_matrix(X, X))
-e = 10
+# estimate b & c
+b = np.mean(dist)
+c = np.mean(np.linalg.norm(X, ord=2, axis=1))
+
+e = 0.5
 ind = dist<e 
 ind2 = dist>=e 
 dist[ind] = 1
@@ -19,34 +28,43 @@ dist[ind2] = 0
 np.fill_diagonal(dist, 0)
 
 G = nx.from_numpy_matrix(dist)
-
-pca = PCA(1)
+nx.draw_networkx(G)
+plt.show()
+pca = PCA(2)
 X_pca = pca.fit_transform(X)
 
 plt.scatter(X[:, 0], X[:, 1], c=X_pca[:, 0])
-#plt.show()
+plt.figure()
+plt.scatter(X[:, 0], X[:, 1], c=X_pca[:, 1])
 
-b = 1
-c = 1
 d = 2
 num_edges = G.number_of_edges()
 L = nx.laplacian_matrix(G).todense()
 I = np.identity(n)
 eig, vec = np.linalg.eig(L)
-eig = np.real(eig).flatten()
-
+eig = np.absolute(np.real(eig).flatten())
 def lagrange(l):
     l1, l2 = l
     t = np.sum(np.log((2*l1*eig)/num_edges + (2*l2)/n))
     return (-d/2)*t + ((n*d)/2)*np.log(2*np.pi) + l1*b + l2*c
 
-res = optimize.fmin_cg(lagrange, [1, 1])
-temp = (res[0]/num_edges) * L + (res[1]/n) * I
+res = optimize.fmin_cg(lagrange, [100, 100])
+res[1] = res[1]/1000
+temp = (res[0]/num_edges) * L + ((res[1]/n) * I)
+print(L)
+print((res[0]/num_edges)*L)
+print(res[0]/num_edges)
+print((res[1]/n) * I)
+print(temp)
 eig, W = np.linalg.eig(X.T * temp * X)
-transformed = X * W
+print(pca.components_)
+print(W)
+transformed = np.matmul(X, W).view(type=np.ndarray)
 plt.figure()
-col = np.squeeze(np.asarray(transformed[:, 0]))
-print(res)
-plt.scatter(X[:, 0], X[:, 1], c=col)
+plt.scatter(X[:, 0], X[:, 1], c=transformed[:, 0])
 plt.figure()
-plt.scatter([transformed[:, 0]], [transformed[:, 1]])
+plt.scatter(X[:, 0], X[:, 1], c=transformed[:, 1])
+plt.figure()
+plt.scatter(transformed[:, 0], transformed[:, 1])
+plt.figure()
+plt.scatter(X_pca[:, 0], X_pca[:, 1])
