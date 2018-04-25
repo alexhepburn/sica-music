@@ -12,16 +12,20 @@ n=400
 X1 = np.random.multivariate_normal([0, 0], [[1, 0], [0, 1]], int(n/2))
 X2 = np.random.multivariate_normal([10, 0], [[1, 0], [0, 1]], int(n/2))
 X3 = np.random.choice([-1, 1], size=(n, 1), p=[0.5, 0.5])
+#X4 = np.random.normal(loc=0, scale=1, size=(n, 1))
+#X5 = np.random.normal(loc=0, scale=1, size=(n, 1))
+#X6 = np.random.normal(loc=0, scale=1, size=(n, 1))
 
 X = np.concatenate([X1,X2])
 dist = np.absolute(distance_matrix(X, X))
 X = np.hstack([X, X3])
+#X = np.hstack([X, X4, X5, X6])
 
 # estimate b & c
 b = np.mean(dist)
 c = np.mean(np.linalg.norm(X, ord=2, axis=1))
 
-e = 0.5
+e = 1
 ind = dist<e 
 ind2 = dist>=e 
 dist[ind] = 1
@@ -49,14 +53,8 @@ def lagrange(l):
     t = np.sum(np.log((2*l1*eig)/num_edges + (2*l2)/n))
     return (-d/2)*t + ((n*d)/2)*np.log(2*np.pi) + l1*b + l2*c
 
-res = optimize.fmin_cg(lagrange, [100, 100])
-res[1] = res[1]/1000
+res = optimize.fmin_cg(lagrange, [1, 1])
 temp = (res[0]/num_edges) * L + ((res[1]/n) * I)
-print(L)
-print((res[0]/num_edges)*L)
-print(res[0]/num_edges)
-print((res[1]/n) * I)
-print(temp)
 eig, W = np.linalg.eig(X.T * temp * X)
 print(pca.components_[0, :])
 print(W[:, 0])
