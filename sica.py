@@ -8,14 +8,15 @@ from sklearn.decomposition import PCA
 import networkx as nx 
 
 n=400
-X1 = np.random.normal(loc=0.0,size=[int(n/2)])
-X2 = np.random.normal(loc=5.0,size=[int(n/2)])
 
+X1 = np.random.multivariate_normal([0, 0], [[1, 0], [0, 1]], int(n/2))
+X2 = np.random.multivariate_normal([10, 0], [[1, 0], [0, 1]], int(n/2))
+X3 = np.random.choice([-1, 1], size=(n, 1), p=[0.5, 0.5])
 
-#X1 = np.random.multivariate_normal([0, 0], [[1, 0], [-2, 1]], int(n/2))
-#X2 = np.random.multivariate_normal([5, 0], [[1, 0], [2, 5]], int(n/2))
 X = np.concatenate([X1,X2])
 dist = np.absolute(distance_matrix(X, X))
+X = np.hstack([X, X3])
+
 # estimate b & c
 b = np.mean(dist)
 c = np.mean(np.linalg.norm(X, ord=2, axis=1))
@@ -37,7 +38,7 @@ plt.scatter(X[:, 0], X[:, 1], c=X_pca[:, 0])
 plt.figure()
 plt.scatter(X[:, 0], X[:, 1], c=X_pca[:, 1])
 
-d = 2
+d = 3
 num_edges = G.number_of_edges()
 L = nx.laplacian_matrix(G).todense()
 I = np.identity(n)
@@ -57,8 +58,8 @@ print(res[0]/num_edges)
 print((res[1]/n) * I)
 print(temp)
 eig, W = np.linalg.eig(X.T * temp * X)
-print(pca.components_)
-print(W)
+print(pca.components_[0, :])
+print(W[:, 0])
 transformed = np.matmul(X, W).view(type=np.ndarray)
 plt.figure()
 plt.scatter(X[:, 0], X[:, 1], c=transformed[:, 0])
